@@ -1,10 +1,15 @@
 const { readFileSync } = require('fs');
 
 function gerarFaturaStr(fatura, pecas) {
-  // função extraída
-  function calcularTotalApresentacao(apre, peca) {
+  // função query
+  function getPeca(apre) {
+    return pecas[apre.id];
+  }
+
+  // função extraída, agora sem o parâmetro “peca”
+  function calcularTotalApresentacao(apre) {
     let total = 0;
-    switch (peca.tipo) {
+    switch (getPeca(apre).tipo) {
       case "tragedia":
         total = 40000;
         if (apre.audiencia > 30) {
@@ -19,32 +24,30 @@ function gerarFaturaStr(fatura, pecas) {
         total += 300 * apre.audiencia;
         break;
       default:
-        throw new Error(`Peça desconhecida: ${peca.tipo}`);
+        throw new Error(`Peça desconhecida: ${getPeca(apre).tipo}`);
     }
     return total;
   }
 
   let totalFatura = 0;
-  let creditos = 0;
-  let faturaStr = `Fatura ${fatura.cliente}\n`;
-  const formato = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2
+  let creditos    = 0;
+  let faturaStr   = `Fatura ${fatura.cliente}\n`;
+  const formato   = new Intl.NumberFormat("pt-BR", {
+    style: "currency", currency: "BRL", minimumFractionDigits: 2
   }).format;
 
   for (let apre of fatura.apresentacoes) {
-    const peca = pecas[apre.id];
-    // antes: todo o switch aqui
-    let total = calcularTotalApresentacao(apre, peca);
+    // não há mais “const peca = …”
+    let total = calcularTotalApresentacao(apre);
 
-    // créditos para próximas contratações
+    // créditos usando getPeca()
     creditos += Math.max(apre.audiencia - 30, 0);
-    if (peca.tipo === "comedia")
+    if (getPeca(apre).tipo === "comedia") {
       creditos += Math.floor(apre.audiencia / 5);
+    }
 
-    // mais uma linha da fatura
-    faturaStr += `  ${peca.nome}: ${formato(total/100)} (${apre.audiencia} assentos)\n`;
+    // linha da fatura usando getPeca()
+    faturaStr += `  ${getPeca(apre).nome}: ${formato(total/100)} (${apre.audiencia} assentos)\n`;
     totalFatura += total;
   }
 
