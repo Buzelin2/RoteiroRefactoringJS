@@ -62,7 +62,7 @@ function calcularTotalCreditos(pecas, apresentacoes) {
     .reduce((acc, cur) => acc + cur, 0);
 }
 
-// função “apenas apresentação”
+// geração em texto
 function gerarFaturaStr(fatura, pecas) {
   let faturaStr = `Fatura ${fatura.cliente}\n`;
 
@@ -83,7 +83,34 @@ function gerarFaturaStr(fatura, pecas) {
   return faturaStr;
 }
 
+// **novo**: geração em HTML
+function gerarFaturaHTML(fatura, pecas) {
+  let html = '<html>\n';
+  html += `  <p> Fatura ${fatura.cliente} </p>\n`;
+  html += '  <ul>\n';
+  for (let apre of fatura.apresentacoes) {
+    const peca  = getPeca(pecas, apre);
+    const total = calcularTotalApresentacao(pecas, apre);
+    html += `    <li>  ${peca.nome}: ${formatarMoeda(total)} (${apre.audiencia} assentos) </li>\n`;
+  }
+  html += '  </ul>\n';
+  html += `  <p> Valor total: ${formatarMoeda(
+    calcularTotalFatura(pecas, fatura.apresentacoes)
+  )} </p>\n`;
+  html += `  <p> Créditos acumulados: ${calcularTotalCreditos(
+    pecas,
+    fatura.apresentacoes
+  )} </p>\n`;
+  html += '</html>';
+  return html;
+}
+
 // main
 const faturas = JSON.parse(readFileSync('./faturas.json'));
 const pecas   = JSON.parse(readFileSync('./pecas.json'));
+
+// exibe fatura em texto
 console.log(gerarFaturaStr(faturas, pecas));
+
+// exibe fatura em HTML
+console.log(gerarFaturaHTML(faturas, pecas));
